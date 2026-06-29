@@ -1,37 +1,37 @@
 {
-  "team_id": "your-team-id",
-  "domain": "coding_assistants",
+  "team_id": "TODO_TEAM_ID",
+  "domain": "agriculture",
   "language_scope": ["en"],
-  "african_alpha_claim": false,
+  "african_alpha_claim": true,
   "budget_laptop_claim": true,
   "submitter": {
-    "name": "your-name",
-    "email": "your-email@domain.com",
-    "github_handle": "your-github"
+    "name": "TODO_SUBMITTER_NAME",
+    "email": "TODO_SUBMITTER_EMAIL",
+    "github_handle": "TODO_GITHUB_HANDLE"
   },
   "cross_disciplinary_pairing": {
-    "discipline": "education",
+    "discipline": "agriculture",
     "load_bearing": true,
-    "description": "Brief description of how your model serves a real-world domain."
+    "description": "FarmHand NA is an offline livestock-health triage assistant for smallholder farmers and extension officers in northern Namibia, with English-first v1 support and a planned verified Oshiwambo written variety for the bilingual demo experience."
   },
   "test_prompts": [
     {
       "prompt_id": "tp_001",
-      "prompt": "Write a Python function that reads a CSV file and returns the column with the highest mean value."
+      "prompt": "A cow has stopped eating, has a swollen left flank, keeps looking at its belly, and started getting worse a few hours after grazing. What are the most likely causes, what first actions are safe to take immediately, and what signs mean the farmer must seek urgent veterinary help?"
     },
     {
       "prompt_id": "tp_002",
-      "prompt": "Explain the difference between a list and a tuple in Python, and give one example where each is the better choice."
+      "prompt": "A goat has diarrhea, is weak, and has pale inner eyelids during the dry season. List the most likely causes, the safest first actions a farmer can take at home, and the red-flag signs that require same-day referral."
     }
   ],
   "model": {
-    "name": "SmolLM2-135M-Instruct-Q4_K_M",
+    "name": "TODO_FARMHAND_NA_MODEL_Q4_K_M",
     "runtime": "llama.cpp",
     "quantization": "GGUF Q4_K_M",
-    "parameters_estimate": "135M",
+    "parameters_estimate": "TODO_2_TO_4B",
     "packaging": "binary_bundle"
   },
   "_runtime": {
-    "model_path": "model/SmolLM2-135M-Instruct-Q4_K_M.gguf"
+    "model_path": "model/FarmHand-NA-TODO-Q4_K_M.gguf"
   }
 }

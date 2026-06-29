@@ -1,7 +1,9 @@
-# Model weights — never commit these to git
-model/*.gguf
-model/*.bin
-model/*.safetensors
+# Model assets — keep the directory stub, never commit weights
+model/
+!model/.gitkeep
+*.gguf
+*.bin
+*.safetensors
 
 # macOS
 .DS_Store
@@ -14,3 +16,6 @@ __pycache__/
 # Local profiler output
 submission.json
 audit.json
+
+# Local benchmark artifacts
+benchmark/results/

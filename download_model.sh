@@ -10,11 +10,12 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODEL_DIR="$HERE/model"
-MODEL_FILE="$MODEL_DIR/SmolLM2-135M-Instruct-Q4_K_M.gguf"
+MODEL_FILE_NAME="FarmHand-NA-TODO-Q4_K_M.gguf"
+MODEL_FILE="$MODEL_DIR/$MODEL_FILE_NAME"
 
-# ── Replace this URL with your public model weight URL ─────────────────────────
-MODEL_URL="https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF/resolve/main/SmolLM2-135M-Instruct-Q4_K_M.gguf"
-# ───────────────────────────────────────────────────────────────────────────────
+# Set this to the final public, ungated GGUF URL once the winning model is chosen.
+# The downloaded filename must stay in sync with metadata.json -> _runtime.model_path.
+MODEL_URL=""
 
 mkdir -p "$MODEL_DIR"
 
@@ -23,7 +24,14 @@ if [[ -f "$MODEL_FILE" ]]; then
   exit 0
 fi
 
-echo "downloading $MODEL_URL → $MODEL_FILE (~80 MB)…"
+if [[ -z "$MODEL_URL" ]]; then
+  echo "error: MODEL_URL is empty." >&2
+  echo "edit download_model.sh and set MODEL_URL to the final public GGUF file" >&2
+  echo "before submission, make sure the filename also matches metadata.json" >&2
+  exit 1
+fi
+
+echo "downloading $MODEL_URL → $MODEL_FILE…"
 
 if command -v curl > /dev/null 2>&1; then
   curl -L --fail --progress-bar -o "$MODEL_FILE.partial" "$MODEL_URL"

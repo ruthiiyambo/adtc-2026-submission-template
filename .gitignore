@@ -19,3 +19,4 @@ audit.json
 
 # Local benchmark artifacts
 benchmark/results/
+benchmark/candidates.env

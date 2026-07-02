@@ -6,6 +6,8 @@ This folder contains the first local accuracy artifacts for FarmHand NA. The goa
 
 - `mcq/farmhand_na_mcq_seed.jsonl`
   - Namibian gold-seed multiple-choice set for local base-model comparison.
+- `mcq/farmhand_na_mcq_holdout.jsonl`
+  - First never-train holdout set for checking whether improvements transfer beyond the dev set.
 - `lm_eval/farmhand_na_mcq.yaml`
   - `lm-evaluation-harness` task config that reads the local JSONL file.
 - `../data/finetune/farmhand_na_seed_sft.jsonl`
@@ -22,23 +24,25 @@ This folder contains the first local accuracy artifacts for FarmHand NA. The goa
 
 - Not a final Namibian gold set.
 - Not yet source-filled item by item.
-- Not yet split into dev and holdout.
 - Not yet bilingual.
 
 Every example is marked as draft and should be reviewed against local extension material, veterinary guidance, and your own domain knowledge before you trust it for model selection.
+
+Treat the current MCQ file as a local development set, not training data. Do not train on its exact question text, choices, or rationales. The project-level split between teach / test / support is documented in [../DATA_FLOW.md](../DATA_FLOW.md).
 
 ## Question Schema Notes
 
 - `locale`, `production_system`, and `season` make it easier to spot whether the set is drifting away from the real target setting.
 - `source_slot_primary` and `source_slot_secondary` are explicit fill-in fields for the Namibian or regional references that justify the question and answer.
-- `review_status` is meant to stay loud until each item has been source-filled and checked by you.
+- `source_status` should distinguish `sourced`, `partial`, and `gap` items so weak spots stay visible.
+- `review_status` should stay loud until each item has been source-filled and checked by you. The current sourcing triage now lives in [../sources/SORTING_MAP.md](../sources/SORTING_MAP.md).
 
 ## Recommended Next Curation Pass
 
 1. Replace any remaining formal English with the exact farmer wording you hear in Omusati, Oshana, Ohangwena, or Oshikoto.
 2. Fill both source slots on every question before you call the set gold.
 3. Tighten any distractors that still feel obviously wrong or culturally unnatural.
-4. Add a small holdout file so model-picking does not overfit to the same 20 questions.
+4. Keep the holdout file completely out of training and day-to-day prompt iteration so model-picking does not overfit to the same cases.
 5. After you choose one written Oshiwambo variety for v1, duplicate a subset in that language for qualitative testing and bonus/demo evidence.
 
 ## Benchmark Workflow

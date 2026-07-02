@@ -68,6 +68,25 @@ cp benchmark/candidates.example.env benchmark/candidates.env
 
 Then edit `benchmark/candidates.env`.
 
+## Cheap Pre-flight Check
+
+Before you spend money or time on the Ubuntu box, run the repo-side sanity
+check:
+
+```bash
+bash scripts/check_benchmark_prereqs.sh
+```
+
+Or, if you already created and filled the real env file:
+
+```bash
+bash scripts/check_benchmark_prereqs.sh benchmark/candidates.env
+```
+
+This checks the benchmark scripts, the `lm-eval` task wiring, the expected MCQ
+file path, and, when `candidates.env` exists, the two GGUF paths plus the basic
+runner knobs and port values.
+
 ## Run The Pair Benchmark
 
 From the submission repo root:

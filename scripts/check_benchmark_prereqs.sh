@@ -107,6 +107,7 @@ check_gnu_time() {
   fi
 
   warn "GNU time with '-v' support not found; RSS capture will fail in benchmark scripts"
+  warn "on Ubuntu, install it with: sudo apt-get install -y time"
 }
 
 echo "Benchmark pre-flight for $ROOT_DIR"
@@ -214,6 +215,7 @@ check_command curl "health-check dependency"
 check_python_min_version python3 "Python"
 check_command git "Git"
 check_command cmake "CMake"
+check_command pkg-config "pkg-config (needed for OpenBLAS llama.cpp builds)"
 check_gnu_time
 
 LLAMA_BENCH_BIN_VALUE="${LLAMA_BENCH_BIN:-llama-bench}"

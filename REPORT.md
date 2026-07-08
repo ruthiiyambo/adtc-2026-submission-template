@@ -70,7 +70,19 @@ If tuning is needed, the highest-value data is not generic chatbot dialogue. It 
 
 ### Current status
 
-Benchmarking is not complete yet. The project is still in model-selection stage, and the final numbers must be collected on an x86 Ubuntu environment that matches the ADTC participant profile as closely as possible. The validation sequence for the final artifact is:
+Benchmarking is not complete yet, but the highest-risk first check is now done. On July 8, 2026, the repo completed a participant-style smoke test on a Google Cloud Ubuntu 22.04.5 `x86_64` VM with `4 vCPU / 8 GB RAM`. `Qwen3-4B-Q4_K_M` loaded successfully through `adtc-profiler`, stayed well inside the RAM budget, and produced a valid `submission.json`.
+
+Observed smoke-test result:
+
+- Machine: Google Cloud Ubuntu 22.04.5 LTS, `x86_64`, `4 vCPU / 8 GB RAM`
+- Model: `Qwen3-4B-Q4_K_M`
+- Generation throughput: `8.46 tokens/sec`
+- Peak RSS: `4380.61 MB`
+- Thermal status: unavailable on this cloud VM because hardware sensors were not exposed to the guest
+
+Interpretation: Qwen is now de-risked as a viable submission candidate from a memory perspective, but it is still below the rough `15 tokens/sec` throughput target. The next comparison step is to run `Phi-4-mini` on the same VM recipe and then decide whether Qwen's likely knowledge advantage is worth the slower speed.
+
+The validation sequence for the final artifact is:
 
 1. Run the repo's pair benchmark to choose the best candidate on local MCQ accuracy, RAM, and generation speed.
 2. Run `adtc-profiler run --mode participant --skip-accuracy` on the frozen submission repo.
@@ -80,12 +92,12 @@ Benchmarking is not complete yet. The project is still in model-selection stage,
 
 | Metric | Value |
 |---|---|
-| Machine | TODO x86 Ubuntu 8 GB participant-style machine |
-| Candidate 1 | TODO |
-| Candidate 1 peak RSS | TODO |
-| Candidate 1 generation speed | TODO |
-| Candidate 1 thermal result | TODO |
-| Candidate 2 | TODO |
+| Machine | Google Cloud Ubuntu 22.04.5 LTS `x86_64`, `4 vCPU / 8 GB RAM` |
+| Candidate 1 | `Qwen3-4B-Q4_K_M` |
+| Candidate 1 peak RSS | `4380.61 MB` |
+| Candidate 1 generation speed | `8.46 tokens/sec` |
+| Candidate 1 thermal result | `N/A on GCP VM; sensors not exposed` |
+| Candidate 2 | `Phi-4-mini` TODO same-VM run |
 | Candidate 2 peak RSS | TODO |
 | Candidate 2 generation speed | TODO |
 | Candidate 2 thermal result | TODO |

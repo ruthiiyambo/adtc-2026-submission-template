@@ -28,7 +28,7 @@ x86 Ubuntu VM, use this path.
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake python3.11 python3.11-venv curl git libopenblas-dev lm-sensors
+sudo apt-get install -y build-essential cmake pkg-config time python3.11 python3.11-venv curl git libopenblas-dev lm-sensors
 ```
 
 4. Put `llama.cpp` under the repo root and build the two required binaries:
@@ -81,6 +81,72 @@ For this first pass, the only numbers that matter are:
 - Is `memory.peak_rss_mb` safely below `7000`?
 - Is `throughput.tokens_per_second_generation` around `15` or better?
 
+Observed result from the first successful Qwen smoke test on July 8, 2026:
+
+- machine: Google Cloud Ubuntu 22.04.5 LTS `x86_64`, `4 vCPU / 8 GB RAM`
+- model: `Qwen3-4B-Q4_K_M`
+- `throughput.tokens_per_second_generation=8.46`
+- `memory.peak_rss_mb=4380.61`
+
+Takeaway: Qwen fits comfortably in RAM on the target profile, but it is still below the rough `15 TPS` target, so the next most valuable comparison is `Phi-4-mini` on the same VM recipe.
+
+## Next Run: Phi-4-mini Side By Side
+
+Once the Qwen smoke test is done, keep the same VM recipe and compare a second
+candidate instead of recreating the whole environment.
+
+1. Put the Phi GGUF at a stable path such as:
+
+```text
+/models/phi4-mini/Phi-4-mini-instruct-Q4_K_M.gguf
+```
+
+2. Fill `benchmark/candidates.env` with both candidates:
+
+```bash
+QWEN_LABEL=qwen3_4b_q4km
+QWEN_MODEL=/models/qwen3-4b/Qwen3-4B-Instruct-Q4_K_M.gguf
+QWEN_PORT=8081
+
+PHI_LABEL=phi4_mini_q4km
+PHI_MODEL=/models/phi4-mini/Phi-4-mini-instruct-Q4_K_M.gguf
+PHI_PORT=8082
+
+THREADS=4
+THREADS_BATCH=4
+CTX_SIZE=2048
+BATCH_SIZE=2048
+UBATCH_SIZE=512
+REPETITIONS=5
+```
+
+3. Make sure the local `llama.cpp` binaries are on `PATH`:
+
+```bash
+export PATH="$PWD/llama.cpp/build/bin:$PATH"
+```
+
+4. Run the repo pre-flight again:
+
+```bash
+bash scripts/check_benchmark_prereqs.sh benchmark/candidates.env
+```
+
+5. Run the pair comparison:
+
+```bash
+bash scripts/run_benchmark_pair.sh benchmark/candidates.env benchmark/results/$(date +%F)-qwen-vs-phi
+```
+
+6. Read the two `summary.json` files under the output folder and compare:
+
+- `throughput_tps`
+- `throughput_peak_rss_mb`
+- `mcq_accuracy`
+
+Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
+`time -v`, so the Ubuntu `time` package is part of the required VM setup.
+
 ## What The Scripts Do
 
 - [scripts/run_candidate_benchmark.sh](/Users/iiyam112156/farmhand-na/scripts/run_candidate_benchmark.sh:1)
@@ -104,7 +170,7 @@ Install system packages:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake python3.11 python3.11-venv curl git libopenblas-dev lm-sensors
+sudo apt-get install -y build-essential cmake pkg-config time python3.11 python3.11-venv curl git libopenblas-dev lm-sensors
 ```
 
 Build `llama.cpp` tools:

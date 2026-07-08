@@ -12,11 +12,17 @@ model/
 __pycache__/
 *.pyc
 .venv/
+.venv311/
 
 # Local profiler output
 submission.json
+submission*.json
+submission.log
 audit.json
 
 # Local benchmark artifacts
 benchmark/results/
 benchmark/candidates.env
+
+# Local tool clones
+llama.cpp/

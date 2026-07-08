@@ -3,6 +3,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+LOCAL_LLAMA_BIN_DIR="$ROOT_DIR/llama.cpp/build/bin"
+LOCAL_QWEN_MODEL_FALLBACK="$ROOT_DIR/model/Qwen3-4B-Q4_K_M.gguf"
 
 FAILURES=0
 WARNINGS=0
@@ -71,6 +73,42 @@ check_command() {
   fi
 }
 
+check_python_min_version() {
+  local cmd="$1"
+  local label="$2"
+  local version
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    warn "$label not found on PATH: $cmd"
+    return
+  fi
+
+  version="$("$cmd" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))' 2>/dev/null || true)"
+  if [[ -z "$version" ]]; then
+    warn "$label version could not be detected: $cmd"
+    return
+  fi
+
+  if "$cmd" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; then
+    ok "$label version is compatible (>= 3.11): $version"
+  else
+    fail "$label version must be >= 3.11, got: $version"
+  fi
+}
+
+check_gnu_time() {
+  if command -v gtime >/dev/null 2>&1 && gtime -v true >/dev/null 2>&1; then
+    ok "GNU time available on PATH: gtime"
+    return
+  fi
+
+  if /usr/bin/time -v true >/dev/null 2>&1; then
+    ok "GNU time available at /usr/bin/time"
+    return
+  fi
+
+  warn "GNU time with '-v' support not found; RSS capture will fail in benchmark scripts"
+}
+
 echo "Benchmark pre-flight for $ROOT_DIR"
 echo
 
@@ -121,27 +159,42 @@ if [[ -f "$CANDIDATES_ENV" ]]; then
   : "${REPETITIONS:=}"
 
   if [[ -n "$QWEN_LABEL" ]]; then ok "QWEN_LABEL set: $QWEN_LABEL"; else fail "QWEN_LABEL is empty"; fi
-  if [[ -n "$PHI_LABEL" ]]; then ok "PHI_LABEL set: $PHI_LABEL"; else fail "PHI_LABEL is empty"; fi
+  if [[ -n "$PHI_LABEL" ]]; then
+    ok "PHI_LABEL set: $PHI_LABEL"
+    PHI_ENABLED=1
+  else
+    warn "PHI_LABEL is empty; pre-flight will treat this as a Qwen-only first pass"
+    PHI_ENABLED=0
+  fi
 
   if [[ -f "$QWEN_MODEL" ]]; then
     ok "Qwen GGUF found: $QWEN_MODEL"
   else
     fail "Qwen GGUF missing: $QWEN_MODEL"
-  fi
-
-  if [[ -f "$PHI_MODEL" ]]; then
-    ok "Phi GGUF found: $PHI_MODEL"
-  else
-    fail "Phi GGUF missing: $PHI_MODEL"
+    if [[ -f "$LOCAL_QWEN_MODEL_FALLBACK" ]]; then
+      warn "repo-local Qwen smoke-test model exists at: $LOCAL_QWEN_MODEL_FALLBACK"
+      warn "for a local macOS smoke test, point QWEN_MODEL there or export a different local candidates env"
+    fi
   fi
 
   check_port "$QWEN_PORT" "Qwen"
-  check_port "$PHI_PORT" "Phi"
 
-  if [[ "$QWEN_PORT" == "$PHI_PORT" ]]; then
-    fail "Qwen and Phi ports must be different"
+  if ((PHI_ENABLED)); then
+    if [[ -f "$PHI_MODEL" ]]; then
+      ok "Phi GGUF found: $PHI_MODEL"
+    else
+      fail "Phi GGUF missing: $PHI_MODEL"
+    fi
+
+    check_port "$PHI_PORT" "Phi"
+
+    if [[ "$QWEN_PORT" == "$PHI_PORT" ]]; then
+      fail "Qwen and Phi ports must be different"
+    else
+      ok "Qwen and Phi ports are distinct"
+    fi
   else
-    ok "Qwen and Phi ports are distinct"
+    warn "Phi candidate is not configured; pair benchmark script will not be runnable yet"
   fi
 
   check_positive_int "$THREADS" "THREADS"
@@ -158,9 +211,10 @@ fi
 echo
 
 check_command curl "health-check dependency"
-check_command python3 "Python"
+check_python_min_version python3 "Python"
 check_command git "Git"
 check_command cmake "CMake"
+check_gnu_time
 
 LLAMA_BENCH_BIN_VALUE="${LLAMA_BENCH_BIN:-llama-bench}"
 LLAMA_SERVER_BIN_VALUE="${LLAMA_SERVER_BIN:-llama-server}"
@@ -169,6 +223,18 @@ LM_EVAL_BIN_VALUE="${LM_EVAL_BIN:-lm-eval}"
 check_command "$LLAMA_BENCH_BIN_VALUE" "llama-bench"
 check_command "$LLAMA_SERVER_BIN_VALUE" "llama-server"
 check_command "$LM_EVAL_BIN_VALUE" "lm-eval"
+
+if [[ -d "$LOCAL_LLAMA_BIN_DIR" ]]; then
+  if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" ]]; then
+    warn "repo-local llama-bench binary not found at $LOCAL_LLAMA_BIN_DIR/llama-bench"
+  fi
+  if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-server" ]]; then
+    warn "repo-local llama-server binary not found at $LOCAL_LLAMA_BIN_DIR/llama-server"
+  fi
+  if [[ -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" || -x "$LOCAL_LLAMA_BIN_DIR/llama-server" ]]; then
+    warn "if you built llama.cpp in this repo, export PATH=\"$LOCAL_LLAMA_BIN_DIR:\$PATH\" before running the profiler"
+  fi
+fi
 
 echo
 

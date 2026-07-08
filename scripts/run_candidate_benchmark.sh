@@ -15,6 +15,7 @@ OUTPUT_ROOT="$4"
 LLAMA_BENCH_BIN="${LLAMA_BENCH_BIN:-llama-bench}"
 LLAMA_SERVER_BIN="${LLAMA_SERVER_BIN:-llama-server}"
 LM_EVAL_BIN="${LM_EVAL_BIN:-lm-eval}"
+TIME_BIN="${TIME_BIN:-}"
 THREADS="${THREADS:-4}"
 THREADS_BATCH="${THREADS_BATCH:-4}"
 CTX_SIZE="${CTX_SIZE:-2048}"
@@ -33,6 +34,52 @@ LM_EVAL_TIME="$RUN_DIR/lm_eval.time.txt"
 
 mkdir -p "$RUN_DIR" "$LM_EVAL_DIR"
 
+pick_time_bin() {
+  if [[ -n "$TIME_BIN" ]]; then
+    if "$TIME_BIN" -v true >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "TIME_BIN is set to '$TIME_BIN', but it does not support 'time -v'." >&2
+    echo "Use GNU time. On Ubuntu this is usually /usr/bin/time. On macOS install it with 'brew install gnu-time' and export TIME_BIN=gtime." >&2
+    return 1
+  fi
+
+  if command -v gtime >/dev/null 2>&1 && gtime -v true >/dev/null 2>&1; then
+    TIME_BIN="gtime"
+    return 0
+  fi
+
+  if /usr/bin/time -v true >/dev/null 2>&1; then
+    TIME_BIN="/usr/bin/time"
+    return 0
+  fi
+
+  echo "GNU time with '-v' support is required for RSS capture." >&2
+  echo "On Ubuntu, install the 'time' package if needed. On macOS, run 'brew install gnu-time' and export TIME_BIN=gtime." >&2
+  echo "ADTC-comparable numbers still need an x86 Ubuntu machine." >&2
+  return 1
+}
+
+require_command() {
+  local cmd="$1"
+  local label="$2"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "missing required command for $label: $cmd" >&2
+    return 1
+  fi
+}
+
+if [[ ! -f "$MODEL_PATH" ]]; then
+  echo "model file not found: $MODEL_PATH" >&2
+  echo "Replace the placeholder path with the real GGUF location before running the benchmark." >&2
+  exit 1
+fi
+
+require_command "$LLAMA_BENCH_BIN" "llama-bench" || exit 1
+require_command "$LLAMA_SERVER_BIN" "llama-server" || exit 1
+require_command "$LM_EVAL_BIN" "lm-eval" || exit 1
+pick_time_bin || exit 1
+
 cleanup() {
   if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" >/dev/null 2>&1; then
     kill "$SERVER_PID" >/dev/null 2>&1 || true
@@ -43,7 +90,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "[$LABEL] running llama-bench"
-/usr/bin/time -v \
+"$TIME_BIN" -v \
   "$LLAMA_BENCH_BIN" \
   -m "$MODEL_PATH" \
   -p 512 \
@@ -85,7 +132,7 @@ if ! curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
 fi
 
 echo "[$LABEL] running lm-eval"
-/usr/bin/time -v \
+"$TIME_BIN" -v \
   "$LM_EVAL_BIN" run \
   --model gguf \
   --model_args "base_url=http://127.0.0.1:$PORT" \

@@ -20,13 +20,13 @@ The project also targets a real African language access gap. The demo experience
 
 ### Score-first reality
 
-The official ADTC profiler currently measures throughput with `llama-bench` using `-p 512 -n 128`. The public rules and placeholder scorer reference `TPS_REFERENCE = 15.0`, which makes `~15 tokens/sec` a strong working target, but the final normalization logic is still described as provisional and the server-side scoring formula is not fully exposed. Memory efficiency is normalized against a 7.0 GB peak RSS reference inside the 8 GB evaluation envelope. This means the submission should optimize in this order:
+The public ADTC materials are specific enough now to shape development priorities. The official profiler uses `llama-bench`, exposes a participant self-check mode, an audit mode, a JSON comparison step, and a leaderboard formula that weights accuracy, throughput, and memory while applying a thermal penalty. The published scorer normalizes throughput against `TPS_REFERENCE = 15.0`, normalizes memory efficiency against a `RAM_LIMIT_GB = 7.0` reference inside the 8 GB laptop envelope, and deducts 10 points if CPU throttling occurs or core temperature exceeds 85 C. That means the submission should optimize in this order:
 
 1. Maximize hidden-set accuracy.
 2. Stay safely below the memory cliff on x86 Ubuntu.
 3. Reach roughly 15 tokens/sec on the participant-style machine, then only keep chasing speed if it also improves thermals or memory.
 
-Because the scored loop is the bare GGUF in `llama.cpp`, the app, bilingual UI, and any retrieval system do not improve benchmark accuracy. Knowledge has to live in the weights.
+The official comparison tolerances also matter for validation discipline: peak and steady-state RSS are allowed roughly +/-15% before being flagged, while generation throughput and first-token latency are allowed roughly +/-25% before being flagged. Because the scored loop is the bare GGUF in `llama.cpp`, the app, bilingual UI, and any retrieval system do not improve benchmark accuracy. Knowledge has to live in the weights.
 
 ### Base-model strategy
 
@@ -47,7 +47,7 @@ Fine-tuning is optional for v1 and only worth the added complexity if the best n
 2. Run a small local agriculture evaluation set that mirrors hidden-task behavior as multiple-choice or short factual selection.
 3. Only then decide whether to do LoRA fine-tuning or continued pretraining on regional livestock-health material.
 
-If tuning is needed, the highest-value data is not generic chatbot dialogue. It is domain knowledge that teaches the model animal-disease patterns, safe first actions, contraindications, and referral cues in a form that transfers to multiple-choice evaluation. Bilingual adaptation matters for the demo and the African use-case bonus, but it should not come at the expense of the hidden English-domain score unless benchmarking proves otherwise.
+If tuning is needed, the highest-value data is not generic chatbot dialogue. It is domain knowledge that teaches the model animal-disease patterns, safe first actions, contraindications, and referral cues in a form that transfers to multiple-choice evaluation. Bilingual adaptation matters for the demo and the African use-case bonus, but it should not come at the expense of the hidden English-domain score unless benchmarking proves otherwise. The newly announced UDUTech credits are useful here for one-off fine-tuning or ablation runs, but they do not change the fact that the final benchmark must still run on the standard ADTC laptop profile.
 
 ### Quantization choice
 
@@ -60,8 +60,8 @@ If tuning is needed, the highest-value data is not generic chatbot dialogue. It 
 - Target environment: Ubuntu laptop profile with 4 vCPU, 8 GB RAM, and integrated graphics only.
 - Runtime: `llama.cpp` only. No cloud inference, no internet, and no external APIs during evaluation.
 - Submission artifact: GGUF weights only, fetched by `download_model.sh` from a public URL.
-- Profiler reality: self-reported numbers are compared against audit numbers, so profiling on Apple Silicon is not trustworthy enough for the final claim.
-- Thermal penalty: performance that looks good in a short run but triggers throttling can lose points overall.
+- Profiler reality: self-reported participant runs are compared against audit runs, so profiling on Apple Silicon is not trustworthy enough for the final claim.
+- Thermal penalty: performance that looks good in a short run but triggers throttling or pushes core temperature above 85 C can lose points overall.
 - Domain safety: livestock-health guidance must stay conservative, especially around poisoning, severe dehydration, birthing emergencies, and referral thresholds.
 
 ---
@@ -70,7 +70,11 @@ If tuning is needed, the highest-value data is not generic chatbot dialogue. It 
 
 ### Current status
 
-Benchmarking is not complete yet. The project is still in model-selection stage, and the final numbers must be collected on an x86 Ubuntu environment that matches the ADTC participant profile as closely as possible.
+Benchmarking is not complete yet. The project is still in model-selection stage, and the final numbers must be collected on an x86 Ubuntu environment that matches the ADTC participant profile as closely as possible. The validation sequence for the final artifact is:
+
+1. Run the repo's pair benchmark to choose the best candidate on local MCQ accuracy, RAM, and generation speed.
+2. Run `adtc-profiler run --mode participant --skip-accuracy` on the frozen submission repo.
+3. Preserve the resulting `submission.json` so it can later be compared against the organizer-side audit JSON with `adtc-profiler compare`.
 
 ### Benchmark worksheet for v1
 
@@ -91,7 +95,7 @@ Benchmarking is not complete yet. The project is still in model-selection stage,
 
 - Peak RSS comfortably below 7.0 GB on the participant-style machine.
 - Generation speed near or above 15 tokens/sec, since extra speed beyond that has diminishing leaderboard value.
-- No thermal penalty during repeated profiler runs.
+- No thermal penalty during repeated profiler runs and no excursions above the published 85 C threshold.
 - Best hidden-set proxy accuracy among the 2B-4B shortlist, even if that model is not the very fastest.
 
 These are self-reported development benchmarks. Official scores are measured by the ADTC profiler on the standard evaluation machine.

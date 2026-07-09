@@ -2,7 +2,7 @@
 
 **Team ID:** TODO_TEAM_ID  
 **Domain:** agriculture  
-**Model:** TBD final 2B-4B GGUF Q4_K_M candidate
+**Model:** `Phi-4-mini-instruct-Q4_K_M` (current submission candidate)
 
 ---
 
@@ -70,9 +70,12 @@ If tuning is needed, the highest-value data is not generic chatbot dialogue. It 
 
 ### Current status
 
-Benchmarking is not complete yet, but the highest-risk first check is now done. On July 8, 2026, the repo completed a participant-style smoke test on a Google Cloud Ubuntu 22.04.5 `x86_64` VM with `4 vCPU / 8 GB RAM`. `Qwen3-4B-Q4_K_M` loaded successfully through `adtc-profiler`, stayed well inside the RAM budget, and produced a valid `submission.json`.
+The repo has now completed both of the most important early validation steps on a Google Cloud Ubuntu 22.04.5 `x86_64` VM with `4 vCPU / 8 GB RAM`:
 
-Observed smoke-test result:
+1. A participant-style `adtc-profiler` smoke test for `Qwen3-4B-Q4_K_M` on July 8, 2026, proving the pipeline, runtime, and basic memory fit on the target class of machine.
+2. A side-by-side native `llama.cpp` benchmark for `Qwen3-4B` versus `Phi-4-mini-instruct` on July 9, 2026, measuring generation throughput, peak RSS, and local FarmHand NA multiple-choice accuracy.
+
+Observed July 8 participant-style smoke result:
 
 - Machine: Google Cloud Ubuntu 22.04.5 LTS, `x86_64`, `4 vCPU / 8 GB RAM`
 - Model: `Qwen3-4B-Q4_K_M`
@@ -80,7 +83,20 @@ Observed smoke-test result:
 - Peak RSS: `4380.61 MB`
 - Thermal status: unavailable on this cloud VM because hardware sensors were not exposed to the guest
 
-Interpretation: Qwen is now de-risked as a viable submission candidate from a memory perspective, but it is still below the rough `15 tokens/sec` throughput target. The next comparison step is to run `Phi-4-mini` on the same VM recipe and then decide whether Qwen's likely knowledge advantage is worth the slower speed.
+Observed July 9 side-by-side benchmark result:
+
+- `Qwen3-4B-Q4_K_M`
+  - `throughput_tps = 11.3916`
+  - `throughput_peak_rss_mb = 3745.64`
+  - `mcq_eval_peak_rss_mb = 7121.34`
+  - `mcq_accuracy = 0.75`
+- `Phi-4-mini-instruct-Q4_K_M`
+  - `throughput_tps = 12.068`
+  - `throughput_peak_rss_mb = 3887.45`
+  - `mcq_eval_peak_rss_mb = 6716.28`
+  - `mcq_accuracy = 0.85`
+
+Interpretation: `Phi-4-mini-instruct-Q4_K_M` is the current leading candidate. It was modestly faster than Qwen, achieved higher local MCQ accuracy, and stayed below the rough `7.0 GB` memory reference during the native MCQ evaluation pass. Qwen remained viable, but its MCQ leg was slightly above that memory reference while also scoring lower on the local seed set.
 
 The validation sequence for the final artifact is:
 
@@ -94,14 +110,19 @@ The validation sequence for the final artifact is:
 |---|---|
 | Machine | Google Cloud Ubuntu 22.04.5 LTS `x86_64`, `4 vCPU / 8 GB RAM` |
 | Candidate 1 | `Qwen3-4B-Q4_K_M` |
-| Candidate 1 peak RSS | `4380.61 MB` |
-| Candidate 1 generation speed | `8.46 tokens/sec` |
-| Candidate 1 thermal result | `N/A on GCP VM; sensors not exposed` |
-| Candidate 2 | `Phi-4-mini` TODO same-VM run |
-| Candidate 2 peak RSS | TODO |
-| Candidate 2 generation speed | TODO |
-| Candidate 2 thermal result | TODO |
-| Final selected model | TODO |
+| Candidate 1 participant smoke peak RSS | `4380.61 MB` |
+| Candidate 1 participant smoke generation speed | `8.46 tokens/sec` |
+| Candidate 1 pair benchmark throughput RSS | `3745.64 MB` |
+| Candidate 1 pair benchmark throughput speed | `11.3916 tokens/sec` |
+| Candidate 1 pair benchmark MCQ RSS | `7121.34 MB` |
+| Candidate 1 pair benchmark MCQ accuracy | `0.75 acc_norm` |
+| Candidate 2 | `Phi-4-mini-instruct-Q4_K_M` |
+| Candidate 2 pair benchmark throughput RSS | `3887.45 MB` |
+| Candidate 2 pair benchmark throughput speed | `12.068 tokens/sec` |
+| Candidate 2 pair benchmark MCQ RSS | `6716.28 MB` |
+| Candidate 2 pair benchmark MCQ accuracy | `0.85 acc_norm` |
+| Candidate thermal result | `N/A on GCP VM; sensors not exposed` |
+| Final selected model | `Phi-4-mini-instruct-Q4_K_M` pending a fresh participant-style profiler rerun |
 
 ### What will count as a good v1
 

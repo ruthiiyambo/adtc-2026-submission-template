@@ -143,17 +143,16 @@ pip install "git+https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler.gi
 Then run a local smoke test before submitting:
 
 ```bash
-# 1. Download your weights
-bash download_model.sh
+# Fastest path on the Ubuntu x86 VM: use the repo helper
+bash scripts/run_x86_vm_smoke.sh
 
-# 2. Run the profiler in participant mode
+# Or run the underlying steps manually
+bash download_model.sh
 adtc-profiler run \
   --submission . \
   --mode participant \
   --output submission.json \
   --skip-accuracy
-
-# 3. Review your report
 cat submission.json
 ```
 
@@ -187,4 +186,3 @@ View the full eligibility rules at [adtc-2026.devpost.com/rules](https://adtc-20
 ## 📄 License
 
 This template is licensed under the terms of the [GNU GPL v3 License](LICENSE).
-

@@ -10,14 +10,13 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODEL_DIR="$HERE/model"
-MODEL_FILE_NAME="Qwen3-4B-Q4_K_M.gguf"
+MODEL_FILE_NAME="Phi-4-mini-instruct-Q4_K_M.gguf"
 MODEL_FILE="$MODEL_DIR/$MODEL_FILE_NAME"
-CACHED_MODEL_PATH="/models/qwen3-4b/Qwen3-4B-Instruct-Q4_K_M.gguf"
+CACHED_MODEL_PATH="/models/phi4-mini/Phi-4-mini-instruct-Q4_K_M.gguf"
 
-# Set this to the final public, ungated GGUF URL once the winning model is chosen.
-# For smoke-test work on a benchmark VM, this script will also reuse a model that
-# already exists at $CACHED_MODEL_PATH.
-MODEL_URL=""
+# Current public source for the selected Phi-4-mini Q4_K_M GGUF. The repo's
+# x86 benchmark VM also reuses a cached copy at $CACHED_MODEL_PATH when present.
+MODEL_URL="https://huggingface.co/bartowski/microsoft_Phi-4-mini-instruct-GGUF/resolve/main/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf?download=true"
 
 mkdir -p "$MODEL_DIR"
 

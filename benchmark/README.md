@@ -19,7 +19,7 @@ That means this bake-off should optimize for sustained accuracy, memory safety, 
 
 ## Shortest Path: One-Model x86 VM Smoke
 
-If your only goal is to de-risk the submission with one Qwen run on a real
+If your only goal is to validate the current submission candidate on a real
 x86 Ubuntu VM, use this path.
 
 1. Provision an Ubuntu 22.04 `x86_64` VM with `4 vCPU / 8 GB RAM`.
@@ -52,16 +52,10 @@ python3.11 -m venv .venv
 6. Put the model at the expected cache path:
 
 ```text
-/models/qwen3-4b/Qwen3-4B-Instruct-Q4_K_M.gguf
+/models/phi4-mini/Phi-4-mini-instruct-Q4_K_M.gguf
 ```
 
-7. Copy the example env exactly once:
-
-```bash
-cp benchmark/candidates.example.env benchmark/candidates.env
-```
-
-8. Run the whole smoke test with one command:
+7. Run the whole smoke test with one command:
 
 ```bash
 bash scripts/run_x86_vm_smoke.sh
@@ -80,14 +74,27 @@ For this first pass, the only numbers that matter are:
 - Is `memory.peak_rss_mb` safely below `7000`?
 - Is `throughput.tokens_per_second_generation` around `15` or better?
 
-Observed result from the first successful Qwen smoke test on July 8, 2026:
+Observed result from the first successful participant-style smoke test on July 8, 2026:
 
 - machine: Google Cloud Ubuntu 22.04.5 LTS `x86_64`, `4 vCPU / 8 GB RAM`
 - model: `Qwen3-4B-Q4_K_M`
 - `throughput.tokens_per_second_generation=8.46`
 - `memory.peak_rss_mb=4380.61`
 
-Takeaway: Qwen fits comfortably in RAM on the target profile, but it is still below the rough `15 TPS` target, so the next most valuable comparison is `Phi-4-mini` on the same VM recipe.
+Observed result from the completed side-by-side benchmark on July 9, 2026:
+
+- `Qwen3-4B-Q4_K_M`
+  - `throughput_tps=11.3916`
+  - `throughput_peak_rss_mb=3745.64`
+  - `mcq_eval_peak_rss_mb=7121.34`
+  - `mcq_accuracy=0.75`
+- `Phi-4-mini-instruct-Q4_K_M`
+  - `throughput_tps=12.068`
+  - `throughput_peak_rss_mb=3887.45`
+  - `mcq_eval_peak_rss_mb=6716.28`
+  - `mcq_accuracy=0.85`
+
+Takeaway: the current repo default is now `Phi-4-mini-instruct-Q4_K_M` because it won the local side-by-side benchmark on accuracy, speed, and MCQ memory headroom. The next highest-value step is a fresh participant-style profiler smoke test for Phi on the same VM recipe.
 
 ## Next Run: Phi-4-mini Side By Side
 

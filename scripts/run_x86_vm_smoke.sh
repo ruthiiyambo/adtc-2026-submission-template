@@ -5,7 +5,6 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_PATH="${1:-$ROOT_DIR/submission.json}"
 LOG_PATH="${2:-$ROOT_DIR/submission.log}"
-CANDIDATES_ENV="${3:-$ROOT_DIR/benchmark/candidates.env}"
 LLAMA_BIN_DIR="${LLAMA_BIN_DIR:-$ROOT_DIR/llama.cpp/build/bin}"
 PROFILER_BIN="${PROFILER_BIN:-$ROOT_DIR/.venv/bin/adtc-profiler}"
 PYTHON_BIN="${PYTHON_BIN:-$ROOT_DIR/.venv/bin/python}"
@@ -40,7 +39,6 @@ fi
 
 require_file "$ROOT_DIR/metadata.json" "submission metadata"
 require_file "$ROOT_DIR/download_model.sh" "download script"
-require_file "$CANDIDATES_ENV" "candidate env"
 require_exec "$LLAMA_BIN_DIR/llama-bench" "llama-bench"
 require_exec "$LLAMA_BIN_DIR/llama-server" "llama-server"
 require_exec "$PROFILER_BIN" "adtc-profiler"
@@ -51,7 +49,6 @@ export LLAMA_ARG_N_GPU_LAYERS=0
 export LLAMA_ARG_DEVICE=none
 
 bash "$ROOT_DIR/download_model.sh"
-bash "$ROOT_DIR/scripts/check_benchmark_prereqs.sh" "$CANDIDATES_ENV"
 
 # Avoid interactive terminal input from interfering with the foreground run.
 exec </dev/null

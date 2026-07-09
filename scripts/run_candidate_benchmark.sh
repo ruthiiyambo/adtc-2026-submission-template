@@ -23,6 +23,9 @@ BATCH_SIZE="${BATCH_SIZE:-2048}"
 UBATCH_SIZE="${UBATCH_SIZE:-512}"
 REPETITIONS="${REPETITIONS:-5}"
 MCQ_SEED_JSONL="${MCQ_SEED_JSONL:-eval/mcq/farmhand_na_mcq_seed.jsonl}"
+MCQ_CTX_SIZE="${MCQ_CTX_SIZE:-512}"
+MCQ_BATCH_SIZE="${MCQ_BATCH_SIZE:-512}"
+MCQ_UBATCH_SIZE="${MCQ_UBATCH_SIZE:-128}"
 MCQ_PARALLEL="${MCQ_PARALLEL:-4}"
 
 RUN_DIR="$OUTPUT_ROOT/$LABEL"
@@ -111,9 +114,9 @@ echo "[$LABEL] running native MCQ scorer"
   "$LLAMA_PERPLEXITY_BIN" \
   -m "$MODEL_PATH" \
   -t "$THREADS" \
-  -c "$CTX_SIZE" \
-  -b "$BATCH_SIZE" \
-  -ub "$UBATCH_SIZE" \
+  -c "$MCQ_CTX_SIZE" \
+  -b "$MCQ_BATCH_SIZE" \
+  -ub "$MCQ_UBATCH_SIZE" \
   -np "$MCQ_PARALLEL" \
   --multiple-choice \
   -bf "$MCQ_BINARY" \

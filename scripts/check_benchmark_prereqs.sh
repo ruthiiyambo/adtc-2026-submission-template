@@ -160,6 +160,10 @@ if [[ -f "$CANDIDATES_ENV" ]]; then
   : "${BATCH_SIZE:=}"
   : "${UBATCH_SIZE:=}"
   : "${REPETITIONS:=}"
+  : "${MCQ_CTX_SIZE:=512}"
+  : "${MCQ_BATCH_SIZE:=512}"
+  : "${MCQ_UBATCH_SIZE:=128}"
+  : "${MCQ_PARALLEL:=4}"
 
   if [[ -n "$QWEN_LABEL" ]]; then ok "QWEN_LABEL set: $QWEN_LABEL"; else fail "QWEN_LABEL is empty"; fi
   if [[ -n "$PHI_LABEL" ]]; then
@@ -206,6 +210,10 @@ if [[ -f "$CANDIDATES_ENV" ]]; then
   check_positive_int "$BATCH_SIZE" "BATCH_SIZE"
   check_positive_int "$UBATCH_SIZE" "UBATCH_SIZE"
   check_positive_int "$REPETITIONS" "REPETITIONS"
+  check_positive_int "$MCQ_CTX_SIZE" "MCQ_CTX_SIZE"
+  check_positive_int "$MCQ_BATCH_SIZE" "MCQ_BATCH_SIZE"
+  check_positive_int "$MCQ_UBATCH_SIZE" "MCQ_UBATCH_SIZE"
+  check_positive_int "$MCQ_PARALLEL" "MCQ_PARALLEL"
 else
   warn "candidate env file not found: $CANDIDATES_ENV"
   warn "copy benchmark/candidates.example.env to benchmark/candidates.env and fill in the real GGUF paths"

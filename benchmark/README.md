@@ -117,6 +117,11 @@ CTX_SIZE=2048
 BATCH_SIZE=2048
 UBATCH_SIZE=512
 REPETITIONS=5
+
+MCQ_CTX_SIZE=512
+MCQ_BATCH_SIZE=512
+MCQ_UBATCH_SIZE=128
+MCQ_PARALLEL=4
 ```
 
 3. Make sure the local `llama.cpp` binaries are on `PATH`:
@@ -143,6 +148,10 @@ bash scripts/run_benchmark_pair.sh benchmark/candidates.env benchmark/results/$(
 - `throughput_peak_rss_mb`
 - `mcq_accuracy`
 
+On the `4 vCPU / 8 GB` VM, keep the MCQ scorer on a smaller context and batch
+than the throughput leg. Qwen reached roughly `7.36 GiB` RSS and was killed
+when the native scorer inherited the larger `2048 / 2048 / 512` settings.
+
 The pair benchmark now uses `llama-perplexity --multiple-choice` for the MCQ
 leg instead of `llama-server` + `lm-eval`. That is more stable for GGUF models
 because it scores the choice continuations natively inside `llama.cpp` rather
@@ -157,7 +166,7 @@ Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
   - Runs `llama-bench` on one model with the ADTC-aligned `-p 512 -n 128` shape.
   - Measures peak RSS for that run with GNU `/usr/bin/time -v`.
   - Converts the FarmHand NA MCQ seed set into the native binary multiple-choice format expected by `llama-perplexity`.
-  - Runs `llama-perplexity --multiple-choice` on CPU only for native MCQ scoring.
+  - Runs `llama-perplexity --multiple-choice` on CPU only for native MCQ scoring with separate MCQ memory knobs.
   - Saves raw outputs plus a normalized `summary.json`.
 - [scripts/build_llama_multiple_choice.py](/Users/iiyam112156/farmhand-na/scripts/build_llama_multiple_choice.py:1)
   - Converts `eval/mcq/farmhand_na_mcq_seed.jsonl` into the binary task format used by `llama-perplexity --multiple-choice`.
@@ -309,6 +318,13 @@ This produces one folder per candidate with:
 - `mcq_eval.stdout.txt`
 - `mcq_eval.time.txt`
 - `summary.json`
+
+The native MCQ scorer uses these env vars when present:
+
+- `MCQ_CTX_SIZE`
+- `MCQ_BATCH_SIZE`
+- `MCQ_UBATCH_SIZE`
+- `MCQ_PARALLEL`
 
 ## Interpreting The Results
 

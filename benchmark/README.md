@@ -144,6 +144,12 @@ bash scripts/run_benchmark_pair.sh benchmark/candidates.env benchmark/results/$(
 - `throughput_peak_rss_mb`
 - `mcq_accuracy`
 
+The pair benchmark now calls a repo-local `lm-eval` compatibility runner by
+default. That wrapper exists because current `llama.cpp` OpenAI-style
+`/v1/completions` responses expose token logprobs under `logprobs.content[...]`,
+while the upstream `lm-eval` `gguf` adapter still expects the older
+`token_logprobs` fields.
+
 Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
 `time -v`, so the Ubuntu `time` package is part of the required VM setup.
 
@@ -153,8 +159,10 @@ Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
   - Runs `llama-bench` on one model with the ADTC-aligned `-p 512 -n 128` shape.
   - Measures peak RSS for that run with GNU `/usr/bin/time -v`.
   - Starts `llama-server` locally on CPU only.
-  - Runs `lm-eval` against the local server with the FarmHand NA MCQ task.
+  - Runs the repo-local `lm-eval` GGUF compatibility wrapper against the local server with the FarmHand NA MCQ task.
   - Saves raw outputs plus a normalized `summary.json`.
+- [scripts/run_lm_eval_gguf_compat.py](/Users/iiyam112156/farmhand-na/scripts/run_lm_eval_gguf_compat.py:1)
+  - Normalizes `llama.cpp` `logprobs.content` responses into the older logprob fields that the current `lm-eval` `gguf` adapter expects.
 - [scripts/run_benchmark_pair.sh](/Users/iiyam112156/farmhand-na/scripts/run_benchmark_pair.sh:1)
   - Runs the single-model script twice using one env file for `Qwen3-4B` and `Phi-4-mini`.
 - [scripts/summarize_benchmark.py](/Users/iiyam112156/farmhand-na/scripts/summarize_benchmark.py:1)

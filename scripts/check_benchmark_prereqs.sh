@@ -119,6 +119,7 @@ require_file "$ROOT_DIR/eval/lm_eval/farmhand_na_mcq.yaml" "lm-eval task config"
 require_file "$ROOT_DIR/eval/mcq/farmhand_na_mcq_seed.jsonl" "MCQ seed set"
 require_file "$ROOT_DIR/scripts/run_candidate_benchmark.sh" "single-model benchmark script"
 require_file "$ROOT_DIR/scripts/run_benchmark_pair.sh" "pair benchmark script"
+require_file "$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py" "lm-eval gguf compat runner"
 require_file "$ROOT_DIR/scripts/summarize_benchmark.py" "benchmark summarizer"
 require_dir "$ROOT_DIR/benchmark" "benchmark directory"
 require_dir "$ROOT_DIR/eval/mcq" "eval MCQ directory"
@@ -218,13 +219,19 @@ check_command cmake "CMake"
 check_command pkg-config "pkg-config (needed for OpenBLAS llama.cpp builds)"
 check_gnu_time
 
+if python3 -c 'import lm_eval' >/dev/null 2>&1; then
+  ok "Python lm_eval package import works"
+else
+  warn "Python lm_eval package import failed; activate the benchmark virtualenv before running"
+fi
+
 LLAMA_BENCH_BIN_VALUE="${LLAMA_BENCH_BIN:-llama-bench}"
 LLAMA_SERVER_BIN_VALUE="${LLAMA_SERVER_BIN:-llama-server}"
-LM_EVAL_BIN_VALUE="${LM_EVAL_BIN:-lm-eval}"
+LM_EVAL_BIN_VALUE="${LM_EVAL_BIN:-$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py}"
 
 check_command "$LLAMA_BENCH_BIN_VALUE" "llama-bench"
 check_command "$LLAMA_SERVER_BIN_VALUE" "llama-server"
-check_command "$LM_EVAL_BIN_VALUE" "lm-eval"
+check_command "$LM_EVAL_BIN_VALUE" "lm-eval compat runner"
 
 if [[ -d "$LOCAL_LLAMA_BIN_DIR" ]]; then
   if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" ]]; then

@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
 if [[ $# -lt 4 ]]; then
   echo "usage: $0 <label> <model_path> <port> <output_root>" >&2
   exit 1
@@ -14,7 +16,7 @@ OUTPUT_ROOT="$4"
 
 LLAMA_BENCH_BIN="${LLAMA_BENCH_BIN:-llama-bench}"
 LLAMA_SERVER_BIN="${LLAMA_SERVER_BIN:-llama-server}"
-LM_EVAL_BIN="${LM_EVAL_BIN:-lm-eval}"
+LM_EVAL_BIN="${LM_EVAL_BIN:-$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py}"
 TIME_BIN="${TIME_BIN:-}"
 THREADS="${THREADS:-4}"
 THREADS_BATCH="${THREADS_BATCH:-4}"

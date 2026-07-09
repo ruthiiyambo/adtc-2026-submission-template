@@ -31,13 +31,13 @@ sudo apt-get update
 sudo apt-get install -y build-essential cmake pkg-config time python3.11 python3.11-venv curl git libopenblas-dev lm-sensors
 ```
 
-4. Put `llama.cpp` under the repo root and build the two required binaries:
+4. Put `llama.cpp` under the repo root and build the required binaries:
 
 ```bash
 git clone https://github.com/ggml-org/llama.cpp.git
 cd llama.cpp
 cmake -B build -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS
-cmake --build build --config Release -t llama-bench -t llama-server
+cmake --build build --config Release -t llama-bench -t llama-server -t llama-perplexity
 cd ..
 ```
 
@@ -47,7 +47,6 @@ cd ..
 python3.11 -m venv .venv
 .venv/bin/pip install --upgrade pip
 .venv/bin/pip install "git+https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler.git"
-.venv/bin/pip install "git+https://github.com/EleutherAI/lm-evaluation-harness.git"
 ```
 
 6. Put the model at the expected cache path:
@@ -144,11 +143,10 @@ bash scripts/run_benchmark_pair.sh benchmark/candidates.env benchmark/results/$(
 - `throughput_peak_rss_mb`
 - `mcq_accuracy`
 
-The pair benchmark now calls a repo-local `lm-eval` compatibility runner by
-default. That wrapper exists because current `llama.cpp` OpenAI-style
-`/v1/completions` responses expose token logprobs under `logprobs.content[...]`,
-while the upstream `lm-eval` `gguf` adapter still expects the older
-`token_logprobs` fields.
+The pair benchmark now uses `llama-perplexity --multiple-choice` for the MCQ
+leg instead of `llama-server` + `lm-eval`. That is more stable for GGUF models
+because it scores the choice continuations natively inside `llama.cpp` rather
+than relying on OpenAI-style server logprob compatibility.
 
 Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
 `time -v`, so the Ubuntu `time` package is part of the required VM setup.
@@ -158,11 +156,13 @@ Note: unlike the participant smoke helper, the pair benchmark scripts need GNU
 - [scripts/run_candidate_benchmark.sh](/Users/iiyam112156/farmhand-na/scripts/run_candidate_benchmark.sh:1)
   - Runs `llama-bench` on one model with the ADTC-aligned `-p 512 -n 128` shape.
   - Measures peak RSS for that run with GNU `/usr/bin/time -v`.
-  - Starts `llama-server` locally on CPU only.
-  - Runs the repo-local `lm-eval` GGUF compatibility wrapper against the local server with the FarmHand NA MCQ task.
+  - Converts the FarmHand NA MCQ seed set into the native binary multiple-choice format expected by `llama-perplexity`.
+  - Runs `llama-perplexity --multiple-choice` on CPU only for native MCQ scoring.
   - Saves raw outputs plus a normalized `summary.json`.
+- [scripts/build_llama_multiple_choice.py](/Users/iiyam112156/farmhand-na/scripts/build_llama_multiple_choice.py:1)
+  - Converts `eval/mcq/farmhand_na_mcq_seed.jsonl` into the binary task format used by `llama-perplexity --multiple-choice`.
 - [scripts/run_lm_eval_gguf_compat.py](/Users/iiyam112156/farmhand-na/scripts/run_lm_eval_gguf_compat.py:1)
-  - Normalizes `llama.cpp` `logprobs.content` responses into the older logprob fields that the current `lm-eval` `gguf` adapter expects.
+  - Keeps the older GGUF HTTP eval workaround available, but it is no longer the default path for the pair benchmark.
 - [scripts/run_benchmark_pair.sh](/Users/iiyam112156/farmhand-na/scripts/run_benchmark_pair.sh:1)
   - Runs the single-model script twice using one env file for `Qwen3-4B` and `Phi-4-mini`.
 - [scripts/summarize_benchmark.py](/Users/iiyam112156/farmhand-na/scripts/summarize_benchmark.py:1)
@@ -187,19 +187,18 @@ Build `llama.cpp` tools:
 git clone https://github.com/ggml-org/llama.cpp.git
 cd llama.cpp
 cmake -B build -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS
-cmake --build build --config Release -t llama-bench -t llama-server
+cmake --build build --config Release -t llama-bench -t llama-server -t llama-perplexity
 ```
 
 Why OpenBLAS: the upstream `llama.cpp` build guide notes that BLAS support can improve prompt processing for larger batch sizes, and the public ADTC profiler uses a prompt-processing shape of `-p 512 -n 128`. It does not usually improve token generation speed directly, but it is still worth enabling for like-for-like prep on Ubuntu CPU systems.
 
-Create a Python environment and install the two benchmark-side Python tools:
+Create a Python environment and install the benchmark-side Python tools:
 
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install "git+https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler.git"
-pip install "git+https://github.com/EleutherAI/lm-evaluation-harness.git"
 ```
 
 ## macOS Smoke Test Only
@@ -220,18 +219,17 @@ brew install cmake gnu-time python@3.11
 
 cd llama.cpp
 cmake -B build
-cmake --build build --config Release -t llama-bench -t llama-server
+cmake --build build --config Release -t llama-bench -t llama-server -t llama-perplexity
 cd ..
 
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install "git+https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler.git"
-pip install "git+https://github.com/EleutherAI/lm-evaluation-harness.git"
-
 export TIME_BIN=gtime
 export LLAMA_BENCH_BIN=/absolute/path/to/llama.cpp/build/bin/llama-bench
 export LLAMA_SERVER_BIN=/absolute/path/to/llama.cpp/build/bin/llama-server
+export LLAMA_PERPLEXITY_BIN=/absolute/path/to/llama.cpp/build/bin/llama-perplexity
 export PATH="$PWD/llama.cpp/build/bin:$PATH"
 ```
 
@@ -286,9 +284,9 @@ Or, if you already created and filled the real env file:
 bash scripts/check_benchmark_prereqs.sh benchmark/candidates.env
 ```
 
-This checks the benchmark scripts, the `lm-eval` task wiring, the expected MCQ
-file path, and, when `candidates.env` exists, the two GGUF paths plus the basic
-runner knobs and port values.
+This checks the benchmark scripts, the expected MCQ seed file path, and, when
+`candidates.env` exists, the two GGUF paths plus the basic runner knobs and
+port values.
 
 ## Run The Pair Benchmark
 
@@ -298,7 +296,7 @@ From the submission repo root:
 source .venv/bin/activate
 export LLAMA_BENCH_BIN=/absolute/path/to/llama.cpp/build/bin/llama-bench
 export LLAMA_SERVER_BIN=/absolute/path/to/llama.cpp/build/bin/llama-server
-export LM_EVAL_BIN=lm-eval
+export LLAMA_PERPLEXITY_BIN=/absolute/path/to/llama.cpp/build/bin/llama-perplexity
 
 bash scripts/run_benchmark_pair.sh benchmark/candidates.env benchmark/results/$(date +%F)
 ```
@@ -307,9 +305,9 @@ This produces one folder per candidate with:
 
 - `llama_bench.sql`
 - `llama_bench.time.txt`
-- `llama_server.log`
-- `lm_eval/`
-- `lm_eval.time.txt`
+- `mcq_eval.prepare.txt`
+- `mcq_eval.stdout.txt`
+- `mcq_eval.time.txt`
 - `summary.json`
 
 ## Interpreting The Results

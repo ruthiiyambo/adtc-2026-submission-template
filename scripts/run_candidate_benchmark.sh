@@ -15,26 +15,25 @@ PORT="$3"
 OUTPUT_ROOT="$4"
 
 LLAMA_BENCH_BIN="${LLAMA_BENCH_BIN:-llama-bench}"
-LLAMA_SERVER_BIN="${LLAMA_SERVER_BIN:-llama-server}"
-LM_EVAL_BIN="${LM_EVAL_BIN:-$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py}"
+LLAMA_PERPLEXITY_BIN="${LLAMA_PERPLEXITY_BIN:-llama-perplexity}"
 TIME_BIN="${TIME_BIN:-}"
 THREADS="${THREADS:-4}"
-THREADS_BATCH="${THREADS_BATCH:-4}"
 CTX_SIZE="${CTX_SIZE:-2048}"
 BATCH_SIZE="${BATCH_SIZE:-2048}"
 UBATCH_SIZE="${UBATCH_SIZE:-512}"
 REPETITIONS="${REPETITIONS:-5}"
-TASK_NAME="${TASK_NAME:-farmhand_na_mcq_seed}"
-INCLUDE_PATH="${INCLUDE_PATH:-eval/lm_eval}"
+MCQ_SEED_JSONL="${MCQ_SEED_JSONL:-eval/mcq/farmhand_na_mcq_seed.jsonl}"
+MCQ_PARALLEL="${MCQ_PARALLEL:-4}"
 
 RUN_DIR="$OUTPUT_ROOT/$LABEL"
-LM_EVAL_DIR="$RUN_DIR/lm_eval"
 LLAMA_BENCH_SQL="$RUN_DIR/llama_bench.sql"
 LLAMA_BENCH_TIME="$RUN_DIR/llama_bench.time.txt"
-LLAMA_SERVER_LOG="$RUN_DIR/llama_server.log"
-LM_EVAL_TIME="$RUN_DIR/lm_eval.time.txt"
+MCQ_EVAL_TIME="$RUN_DIR/mcq_eval.time.txt"
+MCQ_EVAL_STDOUT="$RUN_DIR/mcq_eval.stdout.txt"
+MCQ_BINARY="$RUN_DIR/farmhand_na_mcq_seed.bin"
+MCQ_PREPARE_LOG="$RUN_DIR/mcq_eval.prepare.txt"
 
-mkdir -p "$RUN_DIR" "$LM_EVAL_DIR"
+mkdir -p "$RUN_DIR"
 
 pick_time_bin() {
   if [[ -n "$TIME_BIN" ]]; then
@@ -77,19 +76,14 @@ if [[ ! -f "$MODEL_PATH" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$MCQ_SEED_JSONL" ]]; then
+  echo "MCQ seed file not found: $MCQ_SEED_JSONL" >&2
+  exit 1
+fi
+
 require_command "$LLAMA_BENCH_BIN" "llama-bench" || exit 1
-require_command "$LLAMA_SERVER_BIN" "llama-server" || exit 1
-require_command "$LM_EVAL_BIN" "lm-eval" || exit 1
+require_command "$LLAMA_PERPLEXITY_BIN" "llama-perplexity" || exit 1
 pick_time_bin || exit 1
-
-cleanup() {
-  if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" >/dev/null 2>&1; then
-    kill "$SERVER_PID" >/dev/null 2>&1 || true
-    wait "$SERVER_PID" 2>/dev/null || true
-  fi
-}
-
-trap cleanup EXIT
 
 echo "[$LABEL] running llama-bench"
 "$TIME_BIN" -v \
@@ -106,48 +100,26 @@ echo "[$LABEL] running llama-bench"
   -o sql \
   >"$LLAMA_BENCH_SQL" 2>"$LLAMA_BENCH_TIME"
 
-echo "[$LABEL] starting llama-server on port $PORT"
-"$LLAMA_SERVER_BIN" \
+echo "[$LABEL] building native multiple-choice task file"
+python3 "$ROOT_DIR/scripts/build_llama_multiple_choice.py" \
+  "$MCQ_SEED_JSONL" \
+  "$MCQ_BINARY" \
+  >"$MCQ_PREPARE_LOG"
+
+echo "[$LABEL] running native MCQ scorer"
+"$TIME_BIN" -v -o "$MCQ_EVAL_TIME" \
+  "$LLAMA_PERPLEXITY_BIN" \
   -m "$MODEL_PATH" \
   -t "$THREADS" \
-  -tb "$THREADS_BATCH" \
   -c "$CTX_SIZE" \
   -b "$BATCH_SIZE" \
   -ub "$UBATCH_SIZE" \
+  -np "$MCQ_PARALLEL" \
+  --multiple-choice \
+  -bf "$MCQ_BINARY" \
   -ngl 0 \
   -dev none \
-  --host 127.0.0.1 \
-  --port "$PORT" \
-  >"$LLAMA_SERVER_LOG" 2>&1 &
-SERVER_PID="$!"
-
-for _ in $(seq 1 180); do
-  if curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 1
-done
-
-if ! curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
-  echo "[$LABEL] llama-server did not become healthy in time" >&2
-  exit 1
-fi
-
-echo "[$LABEL] running lm-eval"
-"$TIME_BIN" -v \
-  "$LM_EVAL_BIN" run \
-  --model gguf \
-  --model_args "base_url=http://127.0.0.1:$PORT" \
-  --tasks "$TASK_NAME" \
-  --include_path "$INCLUDE_PATH" \
-  --device cpu \
-  --batch_size 1 \
-  --output_path "$LM_EVAL_DIR" \
-  --log_samples \
-  >"$RUN_DIR/lm_eval.stdout.txt" 2>"$LM_EVAL_TIME"
-
-cleanup
-unset SERVER_PID
+  >"$MCQ_EVAL_STDOUT" 2>&1
 
 python3 scripts/summarize_benchmark.py "$RUN_DIR"
 echo "[$LABEL] done -> $RUN_DIR"

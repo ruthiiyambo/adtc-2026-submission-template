@@ -117,6 +117,7 @@ require_file "$ROOT_DIR/benchmark/README.md" "benchmark workflow doc"
 require_file "$ROOT_DIR/benchmark/candidates.example.env" "candidate env example"
 require_file "$ROOT_DIR/eval/lm_eval/farmhand_na_mcq.yaml" "lm-eval task config"
 require_file "$ROOT_DIR/eval/mcq/farmhand_na_mcq_seed.jsonl" "MCQ seed set"
+require_file "$ROOT_DIR/scripts/build_llama_multiple_choice.py" "native MCQ task builder"
 require_file "$ROOT_DIR/scripts/run_candidate_benchmark.sh" "single-model benchmark script"
 require_file "$ROOT_DIR/scripts/run_benchmark_pair.sh" "pair benchmark script"
 require_file "$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py" "lm-eval gguf compat runner"
@@ -219,19 +220,13 @@ check_command cmake "CMake"
 check_command pkg-config "pkg-config (needed for OpenBLAS llama.cpp builds)"
 check_gnu_time
 
-if python3 -c 'import lm_eval' >/dev/null 2>&1; then
-  ok "Python lm_eval package import works"
-else
-  warn "Python lm_eval package import failed; activate the benchmark virtualenv before running"
-fi
-
 LLAMA_BENCH_BIN_VALUE="${LLAMA_BENCH_BIN:-llama-bench}"
 LLAMA_SERVER_BIN_VALUE="${LLAMA_SERVER_BIN:-llama-server}"
-LM_EVAL_BIN_VALUE="${LM_EVAL_BIN:-$ROOT_DIR/scripts/run_lm_eval_gguf_compat.py}"
+LLAMA_PERPLEXITY_BIN_VALUE="${LLAMA_PERPLEXITY_BIN:-llama-perplexity}"
 
 check_command "$LLAMA_BENCH_BIN_VALUE" "llama-bench"
 check_command "$LLAMA_SERVER_BIN_VALUE" "llama-server"
-check_command "$LM_EVAL_BIN_VALUE" "lm-eval compat runner"
+check_command "$LLAMA_PERPLEXITY_BIN_VALUE" "llama-perplexity"
 
 if [[ -d "$LOCAL_LLAMA_BIN_DIR" ]]; then
   if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" ]]; then
@@ -240,7 +235,11 @@ if [[ -d "$LOCAL_LLAMA_BIN_DIR" ]]; then
   if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-server" ]]; then
     warn "repo-local llama-server binary not found at $LOCAL_LLAMA_BIN_DIR/llama-server"
   fi
-  if [[ -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" || -x "$LOCAL_LLAMA_BIN_DIR/llama-server" ]]; then
+  if [[ ! -x "$LOCAL_LLAMA_BIN_DIR/llama-perplexity" ]]; then
+    warn "repo-local llama-perplexity binary not found at $LOCAL_LLAMA_BIN_DIR/llama-perplexity"
+    warn "rebuild llama.cpp with: cmake --build build --config Release -t llama-bench -t llama-server -t llama-perplexity"
+  fi
+  if [[ -x "$LOCAL_LLAMA_BIN_DIR/llama-bench" || -x "$LOCAL_LLAMA_BIN_DIR/llama-server" || -x "$LOCAL_LLAMA_BIN_DIR/llama-perplexity" ]]; then
     warn "if you built llama.cpp in this repo, export PATH=\"$LOCAL_LLAMA_BIN_DIR:\$PATH\" before running the profiler"
   fi
 fi

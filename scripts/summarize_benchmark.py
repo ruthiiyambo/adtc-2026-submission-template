@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -88,6 +89,35 @@ def parse_lm_eval(path: Path | None) -> dict[str, float | str | None]:
     return result
 
 
+def parse_native_mcq(path: Path) -> dict[str, float | str | None]:
+    result = {
+        "mcq_task": None,
+        "mcq_accuracy": None,
+        "mcq_metric_key": None,
+    }
+    if not path.exists():
+        return result
+
+    text = path.read_text()
+    final_match = re.search(r"Final result:\s*([0-9.]+)\s*\+/-", text)
+    if final_match:
+        result["mcq_task"] = "farmhand_na_mcq_seed"
+        result["mcq_metric_key"] = "acc_norm"
+        result["mcq_accuracy"] = round(float(final_match.group(1)) / 100.0, 6)
+        return result
+
+    step_lines = []
+    for line in text.splitlines():
+        if re.match(r"^\d+\t[0-9.]+$", line.strip()):
+            step_lines.append(line.strip())
+    if step_lines:
+        _, percent = step_lines[-1].split("\t", 1)
+        result["mcq_task"] = "farmhand_na_mcq_seed"
+        result["mcq_metric_key"] = "acc_norm"
+        result["mcq_accuracy"] = round(float(percent) / 100.0, 6)
+    return result
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("usage: summarize_benchmark.py <run_dir>", file=sys.stderr)
@@ -99,10 +129,13 @@ def main() -> int:
         "label": run_dir.name,
         "run_dir": str(run_dir),
         "throughput_peak_rss_mb": parse_gnu_time(run_dir / "llama_bench.time.txt"),
+        "mcq_eval_peak_rss_mb": parse_gnu_time(run_dir / "mcq_eval.time.txt"),
         "lm_eval_peak_rss_mb": parse_gnu_time(run_dir / "lm_eval.time.txt"),
     }
     summary.update(parse_llama_bench_sql(run_dir / "llama_bench.sql"))
-    summary.update(parse_lm_eval(find_lm_eval_results(lm_eval_dir)))
+    summary.update(parse_native_mcq(run_dir / "mcq_eval.stdout.txt"))
+    if summary["mcq_accuracy"] is None:
+        summary.update(parse_lm_eval(find_lm_eval_results(lm_eval_dir)))
 
     summary_path = run_dir / "summary.json"
     summary_path.write_text(json.dumps(summary, indent=2) + "\n")

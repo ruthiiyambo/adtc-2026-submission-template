@@ -1,6 +1,6 @@
 # Technical Report — FarmHand NA
 
-**Team ID:** TODO_TEAM_ID  
+**Team ID:** farmhand-na  
 **Domain:** agriculture  
 **Model:** `Phi-4-mini-instruct-Q4_K_M` (current submission candidate)
 
@@ -74,6 +74,7 @@ The repo has now completed both of the most important early validation steps on 
 
 1. A participant-style `adtc-profiler` smoke test for `Qwen3-4B-Q4_K_M` on July 8, 2026, proving the pipeline, runtime, and basic memory fit on the target class of machine.
 2. A side-by-side native `llama.cpp` benchmark for `Qwen3-4B` versus `Phi-4-mini-instruct` on July 9, 2026, measuring generation throughput, peak RSS, and local FarmHand NA multiple-choice accuracy.
+3. A participant-style `adtc-profiler` rerun for `Phi-4-mini-instruct-Q4_K_M` on July 12, 2026, confirming the selected submission candidate on the target class of machine after the repo was frozen around the chosen model.
 
 Observed July 8 participant-style smoke result:
 
@@ -96,13 +97,23 @@ Observed July 9 side-by-side benchmark result:
   - `mcq_eval_peak_rss_mb = 6716.28`
   - `mcq_accuracy = 0.85`
 
-Interpretation: `Phi-4-mini-instruct-Q4_K_M` is the current leading candidate. It was modestly faster than Qwen, achieved higher local MCQ accuracy, and stayed below the rough `7.0 GB` memory reference during the native MCQ evaluation pass. Qwen remained viable, but its MCQ leg was slightly above that memory reference while also scoring lower on the local seed set.
+Observed July 12 participant-style Phi rerun:
+
+- Machine: Google Cloud Ubuntu 22.04.5 LTS, `x86_64`, `4 vCPU / 8 GB RAM`
+- Model: `Phi-4-mini-instruct-Q4_K_M`
+- Generation throughput: `6.51 tokens/sec`
+- Peak RSS: `3910.79 MB`
+- Thermal status: no throttling observed; core temperature not exposed by the cloud VM guest
+
+Interpretation: `Phi-4-mini-instruct-Q4_K_M` is the selected submission candidate. It was modestly faster than Qwen in the side-by-side benchmark, achieved higher local MCQ accuracy, and stayed below the rough `7.0 GB` memory reference during the native MCQ evaluation pass. The later participant-style rerun confirmed stable memory fit on the Ubuntu target profile, even though generation throughput on that run was lower than the controlled pair-benchmark measurement. Qwen remained viable, but its MCQ leg was slightly above the memory reference while also scoring lower on the local seed set.
 
 The validation sequence for the final artifact is:
 
 1. Run the repo's pair benchmark to choose the best candidate on local MCQ accuracy, RAM, and generation speed.
 2. Run `adtc-profiler run --mode participant --skip-accuracy` on the frozen submission repo.
 3. Preserve the resulting `submission.json` so it can later be compared against the organizer-side audit JSON with `adtc-profiler compare`.
+
+Steps 1 and 2 are now complete for the current Phi submission candidate.
 
 ### Benchmark worksheet for v1
 
@@ -121,8 +132,10 @@ The validation sequence for the final artifact is:
 | Candidate 2 pair benchmark throughput speed | `12.068 tokens/sec` |
 | Candidate 2 pair benchmark MCQ RSS | `6716.28 MB` |
 | Candidate 2 pair benchmark MCQ accuracy | `0.85 acc_norm` |
+| Candidate 2 participant smoke peak RSS | `3910.79 MB` |
+| Candidate 2 participant smoke generation speed | `6.51 tokens/sec` |
 | Candidate thermal result | `N/A on GCP VM; sensors not exposed` |
-| Final selected model | `Phi-4-mini-instruct-Q4_K_M` pending a fresh participant-style profiler rerun |
+| Final selected model | `Phi-4-mini-instruct-Q4_K_M` confirmed in participant-style profiler reruns |
 
 ### What will count as a good v1
 

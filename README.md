@@ -161,6 +161,26 @@ A valid run produces a `submission.json` with `"measured_on": "participant_lapto
 The profiler source code, including the thermal monitoring logic and scoring formulas, is publicly readable at:
 [github.com/Africa-Deep-Tech-Foundation/adtc-profiler](https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler)
 
+### Optional Local Demo UI
+
+This repo also includes a tiny browser demo for local testing. It serves a
+farmer-facing chat box and proxies requests to your local `llama-server`.
+
+```bash
+bash download_model.sh
+bash scripts/run_local_demo.sh
+```
+
+Then open `http://127.0.0.1:3000`.
+
+Notes:
+- `scripts/run_local_demo.sh` reuses an existing `llama-server` on port `8080`
+  when one is already running.
+- If no backend is running, the script starts `llama-server` for
+  `model/Phi-4-mini-instruct-Q4_K_M.gguf` automatically.
+- The browser UI is for local demos and iteration; the official submission path
+  is still the participant profiler workflow above.
+
 ---
 
 ## ⚠️ Rules

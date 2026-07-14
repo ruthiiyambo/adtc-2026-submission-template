@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FarmHand NA Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero-panel">
+        <p class="eyebrow">Offline livestock triage assistant</p>
+        <h1>FarmHand NA</h1>
+        <p class="hero-copy">
+          A simple local demo for smallholder farmers and extension officers.
+          Ask about symptoms, likely causes, safe first actions, and danger
+          signs that need urgent veterinary help.
+        </p>
+
+        <div class="status-card">
+          <div>
+            <p class="status-label">Model connection</p>
+            <p id="health-text" class="status-value">Checking local model...</p>
+          </div>
+          <span id="health-pill" class="health-pill health-pill-pending">
+            Starting
+          </span>
+        </div>
+
+        <div class="info-grid">
+          <article class="info-card">
+            <h2>Best For</h2>
+            <ul>
+              <li>Goat, sheep, calf, and cattle symptom triage</li>
+              <li>Short practical guidance when no vet is nearby</li>
+              <li>Spotting red flags that need same-day referral</li>
+            </ul>
+          </article>
+
+          <article class="info-card">
+            <h2>Safety Notes</h2>
+            <ul>
+              <li>This is decision support, not a diagnosis</li>
+              <li>Multiple sick animals can signal an outbreak</li>
+              <li>Severe breathing trouble, collapse, or sudden swelling means urgent help</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <p class="chat-label">Local demo chat</p>
+            <h2>Ask about an animal problem</h2>
+          </div>
+          <p class="chat-note">Runs against your local `llama-server`.</p>
+        </header>
+
+        <div id="messages" class="messages" aria-live="polite">
+          <article class="message message-assistant">
+            <p class="message-role">FarmHand NA</p>
+            <div class="message-bubble">
+              Describe the animal, the main symptoms, when they started, and
+              whether more than one animal is affected. I will answer with:
+              likely causes, safe first actions, urgent red flags, and what to
+              check next.
+            </div>
+          </article>
+        </div>
+
+        <div class="composer-panel">
+          <div class="prompt-strip">
+            <button class="prompt-chip" type="button" data-prompt="A cow has a swollen left side after grazing and keeps looking at its belly. What are the likely causes, safe first actions, and danger signs?">
+              Cow with swollen left flank
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="A goat has diarrhea, weakness, and pale inner eyelids in the dry season. What are the likely causes, safe first actions, and urgent red flags?">
+              Goat with diarrhea and pale eyelids
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="A calf has watery diarrhea and is becoming weak. What should the farmer do first, and when is urgent help needed?">
+              Weak calf with watery diarrhea
+            </button>
+          </div>
+
+          <form id="chat-form" class="chat-form">
+            <label class="sr-only" for="question-input">Farmer question</label>
+            <textarea
+              id="question-input"
+              name="question"
+              rows="5"
+              placeholder="Example: Three goats are coughing, one has nasal discharge, and they started after a cold night. What are the likely causes, safe first actions, and the red flags?"
+              required
+            ></textarea>
+
+            <div class="composer-footer">
+              <p class="footer-note">
+                Keep questions concrete: animal type, symptoms, timing, and how
+                many animals are affected.
+              </p>
+              <button id="send-button" class="send-button" type="submit">
+                Ask FarmHand
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

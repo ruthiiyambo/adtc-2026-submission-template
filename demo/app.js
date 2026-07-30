@@ -14,16 +14,16 @@ function setHealth(status, detail) {
 
   if (status === "ok") {
     healthPillEl.classList.add("health-pill-ok");
-    healthPillEl.textContent = "Connected";
-    healthTextEl.textContent = detail || "Local model is reachable.";
+    healthPillEl.textContent = "Heeno / Ready";
+    healthTextEl.textContent = detail || "Local model is ready.";
     return;
   }
 
   if (status === "error") {
     healthPillEl.classList.add("health-pill-error");
-    healthPillEl.textContent = "Offline";
+    healthPillEl.textContent = "Aaye / Offline";
     healthTextEl.textContent =
-      detail || "The local model is not reachable yet. Start llama-server first.";
+      detail || "Local model not ready yet. Start llama-server first.";
     return;
   }
 
@@ -89,7 +89,7 @@ async function sendQuestion(question) {
 
   const loadingBubbleEl = addMessage(
     "assistant",
-    "Working through likely causes, safe first actions, and urgent red flags...",
+    "Let me break that down into simple steps...",
     { loading: true }
   );
 
@@ -117,7 +117,7 @@ async function sendQuestion(question) {
     loadingBubbleEl.parentElement.classList.remove("message-loading");
   } catch (error) {
     loadingBubbleEl.textContent =
-      "I could not reach the local model. Make sure `llama-server` is running, then try again.\n\nDetails: " +
+      "I could not reach the local model. Make sure `llama-server` is running, then try again.\n\nMore detail: " +
       error.message;
     loadingBubbleEl.parentElement.classList.remove("message-loading");
   } finally {

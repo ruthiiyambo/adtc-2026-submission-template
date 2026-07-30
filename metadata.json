@@ -12,7 +12,7 @@
   "cross_disciplinary_pairing": {
     "discipline": "agriculture",
     "load_bearing": true,
-    "description": "FarmHand NA is an offline livestock-health triage assistant for smallholder farmers and extension officers in northern Namibia, with English-first v1 support and a planned verified Oshiwambo written variety for the bilingual demo experience."
+    "description": "FarmHand NA is an offline livestock-health triage assistant for smallholder farmers and extension officers in northern Namibia, with English-first v1 support and a planned verified Oshindonga written variety for the bilingual demo experience."
   },
   "test_prompts": [
     {

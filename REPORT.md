@@ -12,7 +12,7 @@ FarmHand NA is an offline livestock-health triage assistant for smallholder farm
 
 This use case matters because veterinary access is sparse, transport is expensive, and connectivity is inconsistent. A farmer often has to decide what to do before a veterinarian or extension officer can be reached. Running fully offline on a low-spec laptop makes the system usable in the field, in schools, in clinics, and during outreach visits without depending on mobile data or cloud APIs.
 
-The project also targets a real African language access gap. The demo experience is designed around English plus one verified written Oshiwambo variety for v1, while the scored submission focuses first on maximizing the benchmarked quality of the underlying on-device model.
+The project also targets a real African language access gap. The demo experience is designed around English plus verified written Oshindonga for v1, while the scored submission focuses first on maximizing the benchmarked quality of the underlying on-device model.
 
 ---
 
@@ -114,6 +114,8 @@ The validation sequence for the final artifact is:
 3. Preserve the resulting `submission.json` so it can later be compared against the organizer-side audit JSON with `adtc-profiler compare`.
 
 Steps 1 and 2 are now complete for the current Phi submission candidate.
+
+On July 26, 2026, a local Apple M4 dry-run of `adtc-profiler run --mode participant --skip-accuracy` was executed against the frozen Phi repo to validate the end-to-end pipeline and confirm that the filled-in `metadata.json` now flows correctly into `submission.json`. The regenerated artifact carries the correct `team_id`, submitter details, and `Phi-4-mini-instruct-Q4_K_M` model info (`architecture = phi3`, `params_match = true`) at commit `599c221d`. This dry-run recorded `30.86 tokens/sec` and `2546.51 MB` peak RSS with no observed throttling. These Apple Silicon numbers are for pipeline validation only and are not the scored figures — the authoritative `submission.json` must still be produced by `scripts/run_x86_vm_smoke.sh` on the x86 Ubuntu target profile.
 
 ### Benchmark worksheet for v1
 

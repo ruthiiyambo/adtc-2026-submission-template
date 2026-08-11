@@ -24,6 +24,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 106.25%;
+}
+
 html,
 body {
   margin: 0;
@@ -103,8 +107,20 @@ body::before {
   margin: 0;
   max-width: 28rem;
   color: rgba(35, 25, 15, 0.82);
-  font-size: 1.06rem;
-  line-height: 1.65;
+  font-size: 1.16rem;
+  line-height: 1.7;
+}
+
+.animal-note {
+  margin: 0.85rem 0 0;
+  max-width: 32rem;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.animal-note strong {
+  color: var(--green-deep);
 }
 
 .namibia-card,
@@ -162,8 +178,8 @@ body::before {
 .animal-card p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.45;
-  font-size: 0.94rem;
+  line-height: 1.5;
+  font-size: 1.02rem;
 }
 
 .animal-mark {
@@ -225,6 +241,8 @@ body::before {
   margin: 0.55rem 0 0;
   padding-left: 1.1rem;
   color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.5;
 }
 
 .guide-list li + li {
@@ -356,13 +374,14 @@ body::before {
 }
 
 .welcome-bubble {
-  max-width: 14rem;
+  max-width: 15rem;
   padding: 0.95rem 1rem;
   border-radius: 22px 22px 22px 6px;
   background: rgba(58, 43, 28, 0.28);
   backdrop-filter: blur(12px);
   color: #fff4e6;
-  line-height: 1.45;
+  font-size: 1.02rem;
+  line-height: 1.5;
   box-shadow: 0 14px 34px rgba(48, 28, 10, 0.16);
 }
 
@@ -431,8 +450,8 @@ body::before {
   background: rgba(42, 31, 21, 0.26);
   color: #fff6e9;
   font: inherit;
-  font-size: 0.9rem;
-  line-height: 1.3;
+  font-size: 0.98rem;
+  line-height: 1.35;
   cursor: pointer;
   transition: transform 120ms ease, background 120ms ease;
 }
@@ -471,13 +490,14 @@ body::before {
 }
 
 .message-bubble {
-  max-width: min(19rem, 100%);
-  padding: 0.92rem 0.95rem;
+  max-width: min(21rem, 100%);
+  padding: 0.95rem 1rem;
   border-radius: 20px;
   background: var(--assistant);
   border: 1px solid rgba(72, 50, 29, 0.1);
-  color: #433223;
-  line-height: 1.52;
+  color: #3a2a1c;
+  font-size: 1.08rem;
+  line-height: 1.62;
   white-space: pre-wrap;
   box-shadow: 0 8px 24px rgba(58, 35, 14, 0.12);
 }
@@ -532,8 +552,8 @@ body::before {
   margin: 0;
   flex: 1;
   color: rgba(255, 244, 228, 0.82);
-  font-size: 0.88rem;
-  line-height: 1.4;
+  font-size: 0.96rem;
+  line-height: 1.45;
 }
 
 .send-button {

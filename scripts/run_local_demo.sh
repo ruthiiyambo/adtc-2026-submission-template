@@ -66,7 +66,7 @@ else
     exit 1
   fi
 
-  BACKEND_LOG="$(mktemp "${TMPDIR:-/tmp}/farmhand-llama-server.XXXXXX.log")"
+  BACKEND_LOG="$(mktemp "${TMPDIR:-/tmp}/farmhand-llama-server.XXXXXX")"
   echo "starting llama-server in the background"
   echo "backend log: $BACKEND_LOG"
 
